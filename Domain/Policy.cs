@@ -3,6 +3,10 @@ using System.ComponentModel.DataAnnotations;
 
 namespace PolicyDemo.Domain;
 
+/// <summary>
+/// Domain model representing an insurance policy.
+/// Contains the main properties and a small business operation to cancel a policy.
+/// </summary>
 public class Policy
 {
     [Key]
@@ -13,6 +17,11 @@ public class Policy
     public bool IsCancelled { get; set; }
     public DateTime? CancelledDate { get; set; }
 
+    /// <summary>
+    /// Marks the policy as cancelled and records the cancellation timestamp.
+    /// Throws exception if the policy is already cancelled to protect domain invariants.
+    /// </summary>
+    /// <param name="cancelledDate">UTC timestamp for the cancellation event.</param>
     public void Cancel(DateTime cancelledDate)
     {
         if (IsCancelled)

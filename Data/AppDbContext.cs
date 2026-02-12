@@ -4,12 +4,21 @@ using PolicyDemo.Domain;
 
 namespace PolicyDemo.Data;
 
+/// <summary>
+/// EF Core DbContext containing the Policies DbSet.
+/// Uses an in-memory provider in this demo to avoid external dependencies.
+/// </summary>
 public class AppDbContext : DbContext
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
+    // Exposes the Policies table as a DbSet for queries and persistence operations.
     public DbSet<Policy> Policies => Set<Policy>();
 
+    /// <summary>
+    /// Seeds the in-memory database with a few sample policies.
+    /// This helper is idempotent and intended for demo/test scenarios only.
+    /// </summary>
     public void Seed()
     {
         if (Policies.Any()) return;
