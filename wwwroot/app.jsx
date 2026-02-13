@@ -59,7 +59,7 @@ function TechBadges() {
     );
 }
 
-function PolicyRow({ p, onRequestCancel }) {
+function PolicyRow({ p, onRequestCancel, onRequestAdd }) {
     return (
         <tr>
             <td>{p.policyNumber}</td>
@@ -96,6 +96,11 @@ function App() {
     const [error, setError] = useState(null);
     const [busyId, setBusyId] = useState(null);
 
+    // Add Dialog state
+    const [addOpen, setAddOpen] = useState(false);
+    const [addBusy, setAddBusy] = useState(false);
+    const [addTemplate, setAddTemplate] = useState(null);
+
     // Confirmation dialog state
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [pendingPolicy, setPendingPolicy] = useState(null);
@@ -105,7 +110,7 @@ function App() {
         setLoading(true);
         setError(null);
         try {
-            const res = await fetch('/api/policies');
+            const res = await fetch(ApiEndpoints.GET_POLICIES);
             if (!res.ok) {
                 const txt = await res.text();
                 throw new Error(txt || `Failed to load (${res.status})`);
@@ -123,10 +128,53 @@ function App() {
         load();
     }, []);
 
+    // requestAdd show the dialog
+    const requestAdd = (policy) => {
+        setAddTemplate(policy || null);
+        setAddOpen(true);
+    }
+
     // requestCancel shows the dialog
     const requestCancel = (policy) => {
         setPendingPolicy(policy);
         setConfirmOpen(true);
+    };
+
+    // add policy after user confirms
+    const addPolicy = async ({ customerName, startDate, endDate }) => {
+        setAddBusy(true);
+        setError(null);
+
+        try {
+            const payload = {
+                customerName,
+                startDate,
+                endDate
+            };
+
+            const res = await fetch(ApiEndpoints.CREATE_POLICY, {
+                method: 'POST',
+                headers: {
+                    'Content-type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!res.ok) {
+                const text = await res.json();
+                throw new Error(text || `Failed to add new policy (${res.status}).`);
+            }
+
+            const created = await res.json();
+            // Reload authoritative server list (server now orders by PolicyNumber desc)
+            await load();
+            setAddOpen(false);
+            setAddTemplate(null);
+        } catch (err) {
+            setError(err.message || 'Failed to add policy');
+        } finally {
+            setAddBusy(false);
+        }
     };
 
     // actual cancel after user confirms
@@ -135,7 +183,7 @@ function App() {
         setError(null);
         setBusyId(id);
         try {
-            const res = await fetch(`/api/policies/${id}/cancel`, { method: 'PUT' });
+            const res = await fetch(ApiEndpoints.CANCEL_POLICY(id), { method: 'PUT' });
             if (!res.ok) {
                 const txt = await res.text();
                 throw new Error(txt || `Failed to cancel (${res.status})`);
@@ -164,6 +212,7 @@ function App() {
                     <TechBadges />
                 </div>
                 <div>
+                    <button className="add" onClick={requestAdd} disabled={loading}>Add</button>
                     <button className="refresh" onClick={load} disabled={loading}>Refresh</button>
                 </div>
             </div>
@@ -188,15 +237,31 @@ function App() {
                     </thead>
                     <tbody>
                         {policies.map(p => (
-                            <PolicyRow key={p.policyNumber} p={p} onRequestCancel={(policy) => {
-                                if (busyId) return;
-                                requestCancel(policy);
-                            }} />
+                            <PolicyRow
+                                key={p.policyNumber}
+                                p={p}
+                                onRequestAdd={(policy) => {
+                                    if (busyId) return;
+                                    requestAdd(policy);
+                                }}
+                                onRequestCancel={(policy) => {
+                                    if (busyId) return;
+                                    requestCancel(policy);
+                                }}
+                            />
                         ))}
                     </tbody>
                 </table>
             )}
 
+            <AddPolicyDialog
+                open={addOpen}
+                title="Add Policy"
+                template={addTemplate}
+                busy={addBusy}
+                onClose={() => { if (!addBusy) { setAddOpen(false); setAddTemplate(null); } }}
+                onConfirm={(data) => addPolicy(data)}
+            />
             <ConfirmDialog
                 open={confirmOpen}
                 title="Confirm Cancellation"

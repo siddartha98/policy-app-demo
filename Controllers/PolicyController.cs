@@ -1,5 +1,6 @@
 
 using Microsoft.AspNetCore.Mvc;
+using PolicyDemo.Domain;
 using PolicyDemo.Services;
 
 namespace PolicyDemo.Controllers;
@@ -33,6 +34,25 @@ public class PolicyController : ControllerBase
         catch (Exception ex)
         {
             // Log and return a BadRequest with the error message for simplicity.
+            _logger.LogError(ex.Message);
+            return BadRequest(ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// POST api/policies
+    /// Creates a new policy. The server will assign a PolicyNumber.
+    /// </summary>
+    [HttpPost]
+    public async Task<IActionResult> CreatePolicy([FromBody] Policy newPolicy)
+    {
+        try
+        {
+            var result = await _policyService.AddPolicyAsync(newPolicy);
+            return Created($"/api/policies/{result.PolicyNumber}", result);
+        }
+        catch (Exception ex) 
+        {
             _logger.LogError(ex.Message);
             return BadRequest(ex.Message);
         }

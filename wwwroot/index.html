@@ -60,6 +60,11 @@
             cursor: pointer;
         }
 
+            button.add {
+                background: #2d9cdb;
+                color: #fff;
+            }
+
             button.cancel {
                 background: #e04b4b;
                 color: #fff;
@@ -131,7 +136,11 @@
         This is a simple way to demonstrate a React front-end without a build step.
         The UI calls the backend API (api/policies) to load and cancel policies.
     -->
+    <!-- Api Endpoints (centralized) -->
+    <script src="constants/apiEndpoints.js"></script>
+
     <!-- Reusable Components -->
+    <script type="text/babel" src="components/AddPolicyDialog.jsx"></script>
     <script type="text/babel" src="components/CancelPolicyDialog.jsx"></script>
 
     <!-- App code -->

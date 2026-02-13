@@ -1,7 +1,22 @@
-﻿const { useEffect, useState } = React;
+﻿// CancelPolicyDialog.jsx (ConfirmDialog)
+// Reusable confirmation dialog shown when cancelling a policy.
+// - Props:
+//    open: boolean - whether the dialog is visible
+//    title: string - dialog title displayed prominently
+//    message: string - descriptive message shown to the user
+//    busy: boolean - disables actions while request is in-flight
+//    onConfirm: function - invoked when user confirms the action
+//    onClose: function - invoked when the dialog is dismissed
+//
+// Notes:
+// - Uses role="dialog" and aria-modal="true" for basic accessibility.
+// - Returns null when not open to avoid focus traps or rendering overhead.
+const { useEffect, useState } = React;
 
 function ConfirmDialog({ open, title, message, busy, onConfirm, onClose }) {
+    // Do not render when closed.
     if (!open) return null;
+
     return (
         <div role="dialog" aria-modal="true" style={{
             position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',

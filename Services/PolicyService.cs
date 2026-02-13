@@ -27,10 +27,37 @@ namespace PolicyDemo.Services
         public async Task<IEnumerable<Policy>> GetPoliciesAsync()
         {
             var policies = await _context.Policies
-            .OrderByDescending(p => p.StartDate)
+            .OrderBy(p => p.PolicyNumber)
             .ToListAsync();
 
             return policies;
+        }
+
+        /// <summary>
+        /// Adds a new policy. Generates a new PolicyNumber and persists the entity.
+        /// </summary>
+        public async Task<Policy> AddPolicyAsync(Policy newPolicy)
+        {
+            if (newPolicy == null)
+                throw new ArgumentNullException(nameof(newPolicy));
+
+            if (string.IsNullOrWhiteSpace(newPolicy.CustomerName))
+                throw new ArgumentException("Customer name is a required field.");
+
+            if (newPolicy.EndDate < newPolicy.StartDate)
+                throw new ArgumentException("EndDate must be greater than StartDate.");
+
+            // Assign a new PolicyNumber: if policies exist then max(existingPolicy) + 1,
+            // or start at 1001 if none exist.
+            var latestPolicy = _context.Policies.Any() ? _context.Policies.Max(p => p.PolicyNumber) : 1000;
+            newPolicy.PolicyNumber = latestPolicy + 1;
+            newPolicy.IsCancelled = false;
+            newPolicy.CancelledDate = null;
+
+            _context.Policies.Add(newPolicy);
+            await _context.SaveChangesAsync();
+
+            return newPolicy;
         }
 
         /// <summary>
